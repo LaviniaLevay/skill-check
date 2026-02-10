@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<title>Skill Check 😈</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{
+    --bg1:#070a16; --bg2:#1a0b2e;
+    --card:#0b1230cc; --txt:#eef1ff; --muted:#a7b0ff;
+    --accent:#ff4fd8; --marker:#ffb84d; --line:#ffffff66;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; display:grid; place-items:center;
+    background:
+      radial-gradient(1200px 700px at 15% 10%, #2a1b6f 0%, transparent 60%),
+      radial-gradient(900px 650px at 85% 90%, #0aa6c7 0%, transparent 55%),
+      linear-gradient(135deg,var(--bg1),var(--bg2));
+    font-family:system-ui,Arial;
+    color:var(--txt);
+    overflow:hidden;
+  }
+  .card{
+    width:min(520px,92vw);
+    background:var(--card);
+    border-radius:18px;
+    padding:16px;
+    border:1px solid #ffffff22;
+    box-shadow:0 0 60px #000;
+    text-align:center;
+    position:relative;
+  }
+  h1{margin:0 0 6px;font-size:20px}
+  p{margin:0 0 10px;color:var(--muted)}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  button{
+    background:linear-gradient(135deg,var(--accent),#28d6ff);
+    border:0;border-radius:14px;
+    padding:12px 16px;
+    font-weight:900;font-size:16px;
+    cursor:pointer;
+    color:#071027;
+  }
+  button:active{transform:scale(.98)}
+  button.secondary{
+    background:#0a0f22aa;
+    color:#dbe0ff;
+    border:1px solid #ffffff22;
+  }
+  .bar{
+    height:18px; background:#ffffff22;
+    border-radius:99px; margin:14px 0 10px; position:relative;
+    overflow:hidden;
+    border:1px solid #ffffff22;
+  }
+  .centerline{
+    position:absolute; top:0; bottom:0;
+    width:3px; left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, transparent, var(--line), transparent);
+    box-shadow:0 0 18px rgba(255,255,255,.25);
+  }
+  .marker{
+    position:absolute; top:2px; bottom:2px; width:22px;
+    background:linear-gradient(135deg,var(--marker),#ff7a00);
+    border-radius:99px;
+    left:0%; transform:translateX(-50%);
+    box-shadow:0 10px 18px rgba(0,0,0,.55);
+  }
+  .msg{
+    min-height:52px;
+    font-weight:800;
+    margin-top:10px;
+    padding:12px;
+    border-radius:14px;
+    border:1px dashed #ffffff33;
+    background:#0b1230aa;
+  }
+  img.random{
+    display:none;width:100%;
+    border-radius:12px;margin-top:10px;
+    border:1px solid #ffffff22;
+    box-shadow:0 18px 40px rgba(0,0,0,.45);
+  }
+  .counter{font-size:12px;color:var(--muted);margin-top:8px}
+
+  /* FINAL */
+  .final{
+    position:fixed;inset:0;
+    background:#000;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    z-index:9999;text-align:center;
+    padding:16px;
+  }
+  .final img{
+    max-width:92vw;max-height:70vh;
+    border-radius:18px;
+    border:1px solid #ffffff22;
+    box-shadow:0 0 60px rgba(255,215,0,.55);
+  }
+  .final h2{
+    margin:14px 0 0;
+    color:#ff4fd8;
+    font-size:34px;
+    letter-spacing:1px;
+    text-shadow:0 0 18px rgba(255,79,216,.35);
+  }
+
+  /* JUMPSCARE */
+  .jumpscare{
+    position:fixed;inset:0;
+    background:#000;
+    z-index:99999;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .jumpscare img{
+    width:100vw;height:100vh;
+    object-fit:cover;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>🎯 SKILL CHECK</h1>
+  <p>Dă <b>HIT</b> fix pe linia din mijloc. (nu o să-ți iasă.)</p>
+
+  <div class="row">
+    <button id="hit">HIT 😈</button>
+    <button class="secondary" id="reset">RESET</button>
+  </div>
+
+  <div class="bar" aria-label="skill bar">
+    <div class="centerline"></div>
+    <div class="marker" id="marker"></div>
+  </div>
+
+  <div class="msg" id="msg">Hai. Arată-mi “skill-ul”.</div>
+
+  <img id="rndImg" class="random" alt="random meme">
+
+  <div class="counter" id="cnt">Attempts: 0</div>
+</div>
+
+<script>
+let t=0, dir=1, attempts=0, finalShown=false;
+const marker=document.getElementById("marker");
+const msg=document.getElementById("msg");
+const cnt=document.getElementById("cnt");
+const img=document.getElementById("rndImg");
+const hit=document.getElementById("hit");
+const reset=document.getElementById("reset");
+
+// ===== Images =====
+const images = [
+  "cat_loser_rawr.jpeg",
+  "cs_slab.jpeg",
+  "cat1.jpeg",
+  "cat2.jpeg",
+  "cat3.jpeg"
+];
+
+// 3 jumpscares (random)
+const jumpscares = ["jumpscare1.jpeg","jumpscare2.jpeg","jumpscare3.jpeg"];
+
+// ===== Texts (RO, savage) =====
+const roasts = [
+  "Ești slab.",
+  "Recomand lecții de la Lavinia.",
+  "Încearcă altă poziție.",
+  "Bot.",
+  "Mai slab de atât...",
+  "Asta a fost un miss cu încredere.",
+  "Lasa-te.",
+  "Esti în alt univers.",
+  "Skill issue confirmat.",
+  "Nu te mai chinui, jur.",
+  "Ai apăsat HIT ca și cum te ajută.",
+  "(Nice) TRY.",
+  "Recoil control: absent.",
+  "Warmup de 3 ore și tot degeaba."
+];
+
+// ===== Marker movement (impossible to win) =====
+function anim(){
+  t += dir * 1.55;             // faster
+  if(t > 100){ t = 100; dir = -1; }
+  if(t < 0){ t = 0; dir = 1; }
+
+  // avoid center
+  if(Math.abs(t - 50) < 1.2) t += dir * 3.6;
+
+  marker.style.left = t + "%";
+  requestAnimationFrame(anim);
+}
+anim();
+
+// ===== Audio (no mp3) =====
+let ctx;
+function beep(freq=300, dur=0.09){
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === "suspended") ctx.resume();
+
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "square";
+  o.frequency.value = freq;
+
+  const t0 = ctx.currentTime;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t0);
+  o.stop(t0 + dur + 0.02);
+}
+
+function finalMelody(){
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === "suspended") ctx.resume();
+
+  let tt = ctx.currentTime;
+  const seq = [110,130.81,146.83,196,220,196,146.83,130.81]; // dark-ish
+  seq.forEach((f,i)=>{
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sawtooth";
+    o.frequency.value = f;
+
+    g.gain.setValueAtTime(0.0001, tt);
+    g.gain.exponentialRampToValueAtTime(0.26, tt + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.22);
+
+    o.connect(g); g.connect(ctx.destination);
+    o.start(tt); o.stop(tt + 0.25);
+    tt += 0.16;
+  });
+
+  // final hit
+  beep(80,0.12);
+  setTimeout(()=>beep(520,0.08),120);
+}
+
+// ===== Jumpscare =====
+function showJumpscare(){
+  const src = jumpscares[Math.floor(Math.random()*jumpscares.length)];
+  const j = document.createElement("div");
+  j.className = "jumpscare";
+  j.innerHTML = `<img src="${src}" alt="jumpscare">`;
+  document.body.appendChild(j);
+
+  // scary-ish sound
+  beep(70, 0.14);
+
+  setTimeout(()=>j.remove(), 500);
+}
+
+// ===== Helpers =====
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function showRandomImage(){
+  img.src = pick(images);
+  img.style.display = "block";
+}
+
+function showFinal(){
+  if(finalShown) return;
+  finalShown = true;
+  hit.disabled = true;
+
+  finalMelody();
+
+  const f = document.createElement("div");
+  f.className = "final";
+  f.innerHTML = `
+    <img src="lavinia_wins.png" alt="Lavinia wins">
+    <h2>FAILED.<br>LAVINIA IS BETTER :)</h2>
+  `;
+  document.body.appendChild(f);
+}
+
+// ===== Main click =====
+hit.onclick = () => {
+  if(finalShown) return;
+
+  attempts++;
+  cnt.textContent = "Attempts: " + attempts;
+
+  msg.textContent = pick(roasts);
+  showRandomImage();
+
+  // Jumpscare more often (≈ 18%)
+  if(Math.random() < 0.35) showJumpscare();
+
+  // extra roasts milestones
+  if(attempts === 7)  msg.textContent = "7 încercări. Ești constant… la fail.";
+  if(attempts === 10) msg.textContent = "10 încercări. Felicitări, te-ai jucat singur.";
+  if(attempts === 20) msg.textContent = "20 încercări. Asta deja e obsesie.";
+
+  // Final at 25
+  if(attempts === 25) showFinal();
+};
+
+reset.onclick = () => {
+  attempts = 0;
+  finalShown = false;
+  hit.disabled = false;
+
+  msg.textContent = "Reset. Dar tot slab rămâi.";
+  img.style.display = "none";
+  cnt.textContent = "Attempts: 0";
+
+  const finalOverlay = document.querySelector(".final");
+  if(finalOverlay) finalOverlay.remove();
+
+  beep(320, 0.08);
+};
+</script>
+
+</body>
+</html>
